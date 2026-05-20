@@ -101,6 +101,24 @@ func main() {
 }
 ```
 
+For a local persistent database file:
+
+```go
+drv, err := entduck.Open(
+    "./data/app.duckdb?threads=4&memory_limit=2GB&access_mode=read_write&temp_directory=./data/tmp",
+    entduck.WithMaxOpenConns(1),
+    entduck.WithMaxIdleConns(1),
+)
+if err != nil {
+    log.Fatal(err)
+}
+defer drv.Close()
+```
+
+DuckDB opens a missing file path by creating the database file. For write-heavy
+applications, keep `MaxOpenConns(1)` unless you have explicitly validated your
+workload against DuckDB's single-writer model.
+
 ---
 
 ## API Reference
@@ -115,6 +133,134 @@ Opens a DuckDB database and returns an ent-compatible driver.
 | `"./data.duckdb"` | Persistent file database. |
 | `"./data.duckdb?threads=4"` | With DuckDB configuration options. |
 | `"./data.duckdb?access_mode=read_only"` | Read-only mode. |
+
+DSN query parameters are DuckDB configuration settings. The go-duckdb driver
+passes them to DuckDB when opening the database. Values must be URL-encoded
+when they contain spaces, commas, or path separators that need escaping.
+
+Examples:
+
+```text
+./data.duckdb?access_mode=read_only
+./data.duckdb?access_mode=read_write&threads=8&memory_limit=4GB
+./data.duckdb?temp_directory=./tmp&max_temp_directory_size=20GB
+./data.duckdb?enable_external_access=false&autoload_known_extensions=false
+```
+
+See DuckDB's official configuration docs:
+https://duckdb.org/docs/stable/configuration/overview.html
+
+<details>
+<summary>DuckDB DSN Configuration Parameters</summary>
+
+This list is generated from `duckdb_settings()` for the embedded DuckDB used by
+`github.com/marcboeker/go-duckdb v1.8.1`.
+
+| Parameter | Type | Scope |
+| --- | --- | --- |
+| `access_mode` | `VARCHAR` | `GLOBAL` |
+| `allocator_background_threads` | `BOOLEAN` | `GLOBAL` |
+| `allocator_bulk_deallocation_flush_threshold` | `VARCHAR` | `GLOBAL` |
+| `allocator_flush_threshold` | `VARCHAR` | `GLOBAL` |
+| `allow_community_extensions` | `BOOLEAN` | `GLOBAL` |
+| `allow_extensions_metadata_mismatch` | `BOOLEAN` | `GLOBAL` |
+| `allow_persistent_secrets` | `BOOLEAN` | `GLOBAL` |
+| `allow_unredacted_secrets` | `BOOLEAN` | `GLOBAL` |
+| `allow_unsigned_extensions` | `BOOLEAN` | `GLOBAL` |
+| `arrow_large_buffer_size` | `BOOLEAN` | `GLOBAL` |
+| `arrow_lossless_conversion` | `BOOLEAN` | `GLOBAL` |
+| `arrow_output_list_view` | `BOOLEAN` | `GLOBAL` |
+| `autoinstall_extension_repository` | `VARCHAR` | `GLOBAL` |
+| `autoinstall_known_extensions` | `BOOLEAN` | `GLOBAL` |
+| `autoload_known_extensions` | `BOOLEAN` | `GLOBAL` |
+| `binary_as_string` | `BOOLEAN` | `GLOBAL` |
+| `catalog_error_max_schemas` | `UBIGINT` | `GLOBAL` |
+| `checkpoint_threshold` | `VARCHAR` | `GLOBAL` |
+| `custom_extension_repository` | `VARCHAR` | `GLOBAL` |
+| `custom_profiling_settings` | `VARCHAR` | `LOCAL` |
+| `custom_user_agent` | `VARCHAR` | `GLOBAL` |
+| `debug_asof_iejoin` | `BOOLEAN` | `LOCAL` |
+| `debug_checkpoint_abort` | `VARCHAR` | `GLOBAL` |
+| `debug_force_external` | `BOOLEAN` | `LOCAL` |
+| `debug_force_no_cross_product` | `BOOLEAN` | `LOCAL` |
+| `debug_skip_checkpoint_on_commit` | `BOOLEAN` | `GLOBAL` |
+| `debug_window_mode` | `VARCHAR` | `GLOBAL` |
+| `default_block_size` | `UBIGINT` | `GLOBAL` |
+| `default_collation` | `VARCHAR` | `GLOBAL` |
+| `default_null_order` | `VARCHAR` | `GLOBAL` |
+| `default_order` | `VARCHAR` | `GLOBAL` |
+| `default_secret_storage` | `VARCHAR` | `GLOBAL` |
+| `disabled_filesystems` | `VARCHAR` | `GLOBAL` |
+| `disabled_optimizers` | `VARCHAR` | `GLOBAL` |
+| `duckdb_api` | `VARCHAR` | `GLOBAL` |
+| `enable_external_access` | `BOOLEAN` | `GLOBAL` |
+| `enable_fsst_vectors` | `BOOLEAN` | `GLOBAL` |
+| `enable_http_logging` | `BOOLEAN` | `LOCAL` |
+| `enable_http_metadata_cache` | `BOOLEAN` | `GLOBAL` |
+| `enable_macro_dependencies` | `BOOLEAN` | `GLOBAL` |
+| `enable_object_cache` | `BOOLEAN` | `GLOBAL` |
+| `enable_profiling` | `VARCHAR` | `LOCAL` |
+| `enable_progress_bar` | `BOOLEAN` | `LOCAL` |
+| `enable_progress_bar_print` | `BOOLEAN` | `LOCAL` |
+| `enable_view_dependencies` | `BOOLEAN` | `GLOBAL` |
+| `errors_as_json` | `BOOLEAN` | `LOCAL` |
+| `explain_output` | `VARCHAR` | `LOCAL` |
+| `extension_directory` | `VARCHAR` | `GLOBAL` |
+| `external_threads` | `BIGINT` | `GLOBAL` |
+| `file_search_path` | `VARCHAR` | `LOCAL` |
+| `force_bitpacking_mode` | `VARCHAR` | `GLOBAL` |
+| `force_compression` | `VARCHAR` | `GLOBAL` |
+| `home_directory` | `VARCHAR` | `LOCAL` |
+| `http_logging_output` | `VARCHAR` | `LOCAL` |
+| `http_proxy` | `VARCHAR` | `GLOBAL` |
+| `http_proxy_password` | `VARCHAR` | `GLOBAL` |
+| `http_proxy_username` | `VARCHAR` | `GLOBAL` |
+| `ieee_floating_point_ops` | `BOOLEAN` | `LOCAL` |
+| `immediate_transaction_mode` | `BOOLEAN` | `GLOBAL` |
+| `index_scan_max_count` | `UBIGINT` | `GLOBAL` |
+| `index_scan_percentage` | `DOUBLE` | `GLOBAL` |
+| `integer_division` | `BOOLEAN` | `LOCAL` |
+| `lock_configuration` | `BOOLEAN` | `GLOBAL` |
+| `log_query_path` | `VARCHAR` | `LOCAL` |
+| `max_expression_depth` | `UBIGINT` | `LOCAL` |
+| `max_memory` | `VARCHAR` | `GLOBAL` |
+| `max_temp_directory_size` | `VARCHAR` | `GLOBAL` |
+| `max_vacuum_tasks` | `UBIGINT` | `GLOBAL` |
+| `memory_limit` | `VARCHAR` | `GLOBAL` |
+| `merge_join_threshold` | `UBIGINT` | `LOCAL` |
+| `nested_loop_join_threshold` | `UBIGINT` | `LOCAL` |
+| `null_order` | `VARCHAR` | `GLOBAL` |
+| `old_implicit_casting` | `BOOLEAN` | `GLOBAL` |
+| `order_by_non_integer_literal` | `BOOLEAN` | `LOCAL` |
+| `ordered_aggregate_threshold` | `UBIGINT` | `LOCAL` |
+| `partitioned_write_flush_threshold` | `UBIGINT` | `LOCAL` |
+| `partitioned_write_max_open_files` | `UBIGINT` | `LOCAL` |
+| `password` | `VARCHAR` | `GLOBAL` |
+| `perfect_ht_threshold` | `BIGINT` | `LOCAL` |
+| `pivot_filter_threshold` | `BIGINT` | `LOCAL` |
+| `pivot_limit` | `BIGINT` | `LOCAL` |
+| `prefer_range_joins` | `BOOLEAN` | `LOCAL` |
+| `preserve_identifier_case` | `BOOLEAN` | `LOCAL` |
+| `preserve_insertion_order` | `BOOLEAN` | `GLOBAL` |
+| `produce_arrow_string_view` | `BOOLEAN` | `GLOBAL` |
+| `profile_output` | `VARCHAR` | `LOCAL` |
+| `profiling_mode` | `VARCHAR` | `LOCAL` |
+| `profiling_output` | `VARCHAR` | `LOCAL` |
+| `progress_bar_time` | `BIGINT` | `LOCAL` |
+| `scalar_subquery_error_on_multiple_rows` | `BOOLEAN` | `LOCAL` |
+| `schema` | `VARCHAR` | `LOCAL` |
+| `search_path` | `VARCHAR` | `LOCAL` |
+| `secret_directory` | `VARCHAR` | `GLOBAL` |
+| `storage_compatibility_version` | `VARCHAR` | `GLOBAL` |
+| `streaming_buffer_size` | `VARCHAR` | `LOCAL` |
+| `temp_directory` | `VARCHAR` | `GLOBAL` |
+| `threads` | `BIGINT` | `GLOBAL` |
+| `user` | `VARCHAR` | `GLOBAL` |
+| `username` | `VARCHAR` | `GLOBAL` |
+| `wal_autocheckpoint` | `VARCHAR` | `GLOBAL` |
+| `worker_threads` | `BIGINT` | `GLOBAL` |
+
+</details>
 
 ### `entduck.NewDriver(db *sql.DB, opts ...Option) *Driver`
 
